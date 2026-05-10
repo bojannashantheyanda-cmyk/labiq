@@ -298,7 +298,7 @@
 
   // ── EXPERIMENTS ──
   async function loadExperiments() {
-    const res = await fetch('http://127.0.0.1:8000/experiments');
+    const res = await fetch('/experiments');
     allExperiments = await res.json();
     populateCategoryFilter();
     populateAnalyticsSelect();
@@ -368,7 +368,7 @@
 
   async function deleteExperiment(id) {
     if (!confirm(`Delete experiment ${id}?`)) return;
-    await fetch(`http://127.0.0.1:8000/experiments/${id}`, { method: 'DELETE' });
+    await fetch(`/experiments/${id}`, { method: 'DELETE' });
     loadExperiments();
   }
 
@@ -409,7 +409,7 @@
       alert('Please fill in ID, Category and Operator');
       return;
     }
-    const res = await fetch('http://127.0.0.1:8000/experiments', {
+    const res = await fetch('/experiments', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(experiment)
@@ -431,7 +431,7 @@
     const formData = new FormData();
     formData.append('file', fileInput.files[0]);
     try {
-      const res = await fetch('http://127.0.0.1:8000/import', { method: 'POST', body: formData });
+      const res = await fetch('/import', { method: 'POST', body: formData });
       const data = await res.json();
       if (res.ok) {
         resultBox.className = 'import-result success';
@@ -475,7 +475,7 @@
     resultBox.style.color = '#856404';
     resultBox.textContent = '⏳ Uploading and validating file...';
     try {
-      const res = await fetch(`http://127.0.0.1:8000/upload-data/${currentUploadExpId}`, {
+      const res = await fetch(`/upload-data/${currentUploadExpId}`, {
         method: 'POST',
         body: formData
       });
@@ -505,7 +505,7 @@
     if (!id) return;
     document.getElementById('analyticsContent').innerHTML = '<div class="loading">Loading data...</div>';
     try {
-      const res = await fetch(`http://127.0.0.1:8000/analytics/${id}`);
+      const res = await fetch(`/analytics/${id}`);
       if (!res.ok) {
         document.getElementById('analyticsContent').innerHTML = '<div class="no-data">⚠️ No data file found. Use the ⬆ Data button to upload a data file for this experiment.</div>';
         return;
@@ -600,7 +600,7 @@
     const degree = document.getElementById('regDegree').value;
     document.getElementById('regressionContent').innerHTML = '<div class="loading">Running regression analysis...</div>';
     try {
-      const dataRes = await fetch(`http://127.0.0.1:8000/analytics/${id}`);
+      const dataRes = await fetch(`/analytics/${id}`);
       if (!dataRes.ok) {
         document.getElementById('regressionContent').innerHTML = '<div class="no-data">⚠️ No data file found. Use the ⬆ Data button to upload a data file first.</div>';
         return;
@@ -611,9 +611,9 @@
       const currentY = ySel.value;
       ySel.innerHTML = numCols.map(c => `<option value="${c}" ${c===currentY?'selected':''}>${c}</option>`).join('');
       const yCol = ySel.value || numCols[0];
-      const res = await fetch(`http://127.0.0.1:8000/regression/${id}?y_col=${yCol}&degree=${degree}`);
+      const res = await fetch(`/regression/${id}?y_col=${yCol}&degree=${degree}`);
       const result = await res.json();
-      const corrRes = await fetch(`http://127.0.0.1:8000/correlation/${id}`);
+      const corrRes = await fetch(`/correlation/${id}`);
       const corrResult = await corrRes.json();
       renderRegression(result, corrResult);
     } catch(e) {
@@ -690,7 +690,7 @@
     chatBox.scrollTop = chatBox.scrollHeight;
     input.value = '';
     try {
-      const res = await fetch('http://127.0.0.1:8000/ai-query', {
+      const res = await fetch('/ai-query', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question, experiment_id: experimentId })
