@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>LabIQ</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; background: #f5f5f5; }
+    .header {
+      background: #1a73e8; color: white;
+      padding: 14px 28px; display: flex;
+      align-items: center; justify-content: space-between;
+    }
+    .header h1 { font-size: 20px; }
+    .header span { font-size: 14px; opacity: 0.85; }
+    .tabs {
+      background: white; border-bottom: 2px solid #e0e0e0;
+      padding: 0 28px; display: flex; gap: 0;
+    }
+    .tab {
+      padding: 14px 24px; cursor: pointer; font-size: 14px;
+      color: #666; border-bottom: 3px solid transparent;
+      margin-bottom: -2px; font-weight: 500;
+    }
+    .tab.active { color: #1a73e8; border-bottom-color: #1a73e8; }
+    .tab-content { display: none; padding: 28px; }
+    .tab-content.active { display: block; }
+    h2 { font-size: 24px; margin-bottom: 18px; color: #222; }
+    .toolbar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+    .toolbar input, .toolbar select { padding: 7px 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 13px; }
+    .toolbar input[type="text"] { width: 220px; }
+    .btn { padding: 7px 16px; border: none; border-radius: 6px; font-size: 13px; cursor: pointer; font-weight: 500; }
+    .btn-primary { background: #1a73e8; color: white; }
+    .btn-primary:hover { background: #1558b0; }
+    .btn-success { background: #34a853; color: white; }
+    .btn-success:hover { background: #2d8f47; }
+    .btn-cancel { background: #eee; color: #333; }
+    .table-wrap { background: white; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); overflow: hidden; }
+    table { width: 100%; border-collapse: collapse; }
+    th { background: #e8f0fe; padding: 12px 16px; text-align: left; font-size: 13px; color: #333; border-bottom: 1px solid #ddd; }
+    td { padding: 11px 16px; font-size: 13px; color: #444; border-bottom: 1px solid #f0f0f0; }
+    tr:hover { background: #fafafa; }
+    tr:last-child td { border-bottom: none; }
+    .action-btn { padding: 5px 10px; border: none; border-radius: 5px; cursor: pointer; font-size: 12px; margin-right: 4px; }
+    .btn-delete { background: #e53935; color: white; }
+    .btn-view { background: #1a73e8; color: white; }
+    .btn-reg { background: #9c27b0; color: white; }
+    .btn-upload { background: #0097a7; color: white; }
+    .btn-upload:hover { background: #00838f; }
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); justify-content: center; align-items: center; z-index: 999; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: white; border-radius: 12px; padding: 28px; width: 480px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+    .modal h3 { margin-bottom: 18px; font-size: 18px; color: #222; }
+    .form-group { margin-bottom: 14px; }
+    .form-group label { display: block; font-size: 12px; font-weight: 600; color: #555; margin-bottom: 5px; }
+    .form-group input, .form-group textarea { width: 100%; padding: 8px 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 13px; }
+    .form-group textarea { height: 80px; resize: vertical; }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px; }
+    .count { font-size: 13px; color: #666; margin-bottom: 10px; }
+    .import-box { background: white; border: 2px dashed #1a73e8; border-radius: 10px; padding: 20px 28px; margin-bottom: 20px; display: none; }
+    .import-box.open { display: block; }
+    .import-box h4 { font-size: 14px; color: #333; margin-bottom: 10px; }
+    .import-box p { font-size: 12px; color: #888; margin-bottom: 12px; }
+    .import-row { display: flex; gap: 10px; align-items: center; }
+    .import-result { margin-top: 12px; padding: 10px 14px; border-radius: 6px; font-size: 13px; display: none; }
+    .import-result.success { background: #e6f4ea; color: #2d8f47; }
+    .import-result.error { background: #fce8e6; color: #c5221f; }
+    .analytics-controls { background: white; border-radius: 10px; padding: 20px; margin-bottom: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); display: flex; gap: 16px; align-items: flex-end; flex-wrap: wrap; }
+    .analytics-controls label { font-size: 12px; font-weight: 600; color: #555; display: block; margin-bottom: 5px; }
+    .analytics-controls select { padding: 8px 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 13px; min-width: 200px; }
+    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+    .stats-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+    .stat-card { background: white; border-radius: 10px; padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+    .stat-label { font-size: 11px; color: #888; margin-bottom: 4px; }
+    .stat-value { font-size: 22px; font-weight: 600; color: #1a73e8; }
+    .stat-unit { font-size: 11px; color: #aaa; margin-top: 2px; }
+    .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+    .chart-card { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+    .chart-card h4 { font-size: 13px; font-weight: 600; color: #333; margin-bottom: 14px; }
+    .chart-card canvas { max-height: 240px; }
+    .span-2 { grid-column: span 2; }
+    .no-data { text-align: center; padding: 60px; color: #aaa; font-size: 14px; }
+    .loading { text-align: center; padding: 40px; color: #888; }
+    .chat-window { background: white; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); overflow: hidden; }
+    .chat-messages { height: 400px; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+    .chat-input-row { border-top: 1px solid #f0f0f0; padding: 16px; display: flex; gap: 10px; }
+    .chat-input-row input { flex: 1; padding: 10px 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 14px; }
+    .msg-user { display: flex; justify-content: flex-end; }
+    .msg-user div { background: #1a73e8; color: white; padding: 10px 14px; border-radius: 12px 12px 2px 12px; max-width: 70%; font-size: 13px; line-height: 1.5; }
+    .msg-ai { display: flex; gap: 8px; align-items: flex-start; }
+    .msg-ai-icon { width: 28px; height: 28px; background: #e8f0fe; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+    .msg-ai-text { background: #f8f9fa; padding: 10px 14px; border-radius: 12px 12px 12px 2px; max-width: 75%; font-size: 13px; color: #333; line-height: 1.6; }
+    .suggested-questions { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+    .suggested-btn { padding: 6px 14px; background: #e8f0fe; color: #1a73e8; border: none; border-radius: 20px; font-size: 12px; cursor: pointer; }
+    .suggested-btn:hover { background: #d0e4fd; }
+    .upload-info { background: #e8f0fe; border-radius: 8px; padding: 12px; margin-bottom: 16px; font-size: 12px; color: #1a73e8; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>⚗️ LabIQ</h1>
+  <div style="display:flex; align-items:center; gap:16px">
+    <span id="headerUsername" style="font-size:14px; opacity:0.85"></span>
+    <button onclick="doLogout()" style="padding:6px 14px; background:rgba(255,255,255,0.2); border:1px solid rgba(255,255,255,0.4); color:white; border-radius:6px; cursor:pointer; font-size:13px">Logout</button>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('experiments', this)">📋 Experiments</div>
+  <div class="tab" onclick="switchTab('analytics', this)">📊 Analytics</div>
+  <div class="tab" onclick="switchTab('regression', this)">📈 Regression</div>
+  <div class="tab" onclick="switchTab('ai', this)">🤖 AI Assistant</div>
+</div>
+
+<!-- EXPERIMENTS TAB -->
+<div class="tab-content active" id="tab-experiments">
+  <h2>Experiments</h2>
+  <div class="toolbar">
+    <input type="text" id="searchInput" placeholder="Search notes..." oninput="filterTable()">
+    <select id="categoryFilter" onchange="filterTable()">
+      <option value="">All categories</option>
+    </select>
+    <button class="btn btn-primary" onclick="openModal()">+ New Experiment</button>
+    <button class="btn btn-success" onclick="toggleImport()">⬆ Import CSV / Excel</button>
+  </div>
+  <div class="import-box" id="importBox">
+    <h4>Import experiments from a file</h4>
+    <p>Your file must have these columns: <strong>id, category, operator, date</strong> — and optionally <strong>notes</strong>. Duplicate IDs will be skipped automatically.</p>
+    <div class="import-row">
+      <input type="file" id="importFile" accept=".csv,.xlsx,.xls">
+      <button class="btn btn-success" onclick="importFile()">Upload & Import</button>
+      <button class="btn btn-cancel" onclick="toggleImport()">Cancel</button>
+    </div>
+    <div class="import-result" id="importResult"></div>
+  </div>
+  <div class="count" id="countLabel"></div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>ID</th><th>Category</th><th>Operator</th><th>Date</th><th>Notes</th><th>Actions</th></tr>
+      </thead>
+      <tbody id="experimentsTable">
+        <tr><td colspan="6" style="text-align:center;padding:20px;color:#999">Loading...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ANALYTICS TAB -->
+<div class="tab-content" id="tab-analytics">
+  <h2>Analytics Dashboard</h2>
+  <div class="analytics-controls">
+    <div>
+      <label>Select Experiment</label>
+      <select id="analyticsExpSelect" onchange="loadAnalytics()">
+        <option value="">-- Choose an experiment --</option>
+      </select>
+    </div>
+    <div>
+      <label>X Axis</label>
+      <select id="xAxisSelect" onchange="updateCharts()">
+        <option value="timestamp">Timestamp</option>
+      </select>
+    </div>
+    <div>
+      <label>Y Axis</label>
+      <select id="yAxisSelect" onchange="updateCharts()">
+        <option value="">-- Select --</option>
+      </select>
+    </div>
+  </div>
+  <div id="analyticsContent">
+    <div class="no-data">👆 Select an experiment above to view its analytics</div>
+  </div>
+</div>
+
+<!-- REGRESSION TAB -->
+<div class="tab-content" id="tab-regression">
+  <h2>Regression & Forecasting</h2>
+  <div class="analytics-controls">
+    <div>
+      <label>Select Experiment</label>
+      <select id="regExpSelect" onchange="loadRegression()">
+        <option value="">-- Choose an experiment --</option>
+      </select>
+    </div>
+    <div>
+      <label>Y Axis (variable to analyze)</label>
+      <select id="regYCol" onchange="loadRegression()">
+        <option value="">-- Select after choosing experiment --</option>
+      </select>
+    </div>
+    <div>
+      <label>Polynomial Degree</label>
+      <select id="regDegree" onchange="loadRegression()">
+        <option value="1">1 — Linear</option>
+        <option value="2">2 — Quadratic</option>
+        <option value="3">3 — Cubic</option>
+      </select>
+    </div>
+  </div>
+  <div id="regressionContent">
+    <div class="no-data">👆 Select an experiment to run regression & forecasting</div>
+  </div>
+</div>
+
+<!-- AI ASSISTANT TAB -->
+<div class="tab-content" id="tab-ai">
+  <h2>🤖 AI Lab Assistant</h2>
+  <p style="color:#666; font-size:14px; margin-bottom:20px">Ask questions about your experiments in plain English. The AI has access to all your experiment data and statistics.</p>
+  <div class="analytics-controls">
+    <div>
+      <label>Focus on experiment (optional)</label>
+      <select id="aiExpSelect">
+        <option value="">All experiments</option>
+      </select>
+    </div>
+  </div>
+  <div style="margin-bottom:16px">
+    <div style="font-size:12px; font-weight:600; color:#555; margin-bottom:8px">💡 Try asking:</div>
+    <div class="suggested-questions">
+      <button class="suggested-btn" onclick="askQuestion('Which experiment had the highest CO2 capture percentage?')">Highest CO2 capture?</button>
+      <button class="suggested-btn" onclick="askQuestion('Compare the Temperature Swing Adsorption experiments')">Compare TSA experiments</button>
+      <button class="suggested-btn" onclick="askQuestion('What was the average outlet O2 concentration in this experiment?')">Average outlet O2?</button>
+      <button class="suggested-btn" onclick="askQuestion('Summarize the key findings from all experiments')">Summarize all experiments</button>
+      <button class="suggested-btn" onclick="askQuestion('Which experiment had the most stable pressure readings?')">Most stable pressure?</button>
+      <button class="suggested-btn" onclick="askQuestion('What trends do you see in the temperature data?')">Temperature trends?</button>
+    </div>
+  </div>
+  <div class="chat-window">
+    <div class="chat-messages" id="chatMessages">
+      <div style="text-align:center; color:#aaa; font-size:13px; margin-top:140px">
+        🧪 Ask me anything about your lab data!<br>
+        <span style="font-size:12px">I can analyze trends, compare experiments, and explain your results.</span>
+      </div>
+    </div>
+    <div class="chat-input-row">
+      <input type="text" id="aiInput"
+        placeholder="e.g. Which experiment had the highest outlet O2 percentage?"
+        onkeypress="if(event.key==='Enter') sendAIQuery()">
+      <button class="btn btn-primary" onclick="sendAIQuery()" style="padding:10px 20px">Send ↗</button>
+    </div>
+  </div>
+</div>
+
+<!-- NEW EXPERIMENT MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <h3>New Experiment</h3>
+    <div class="form-group"><label>Experiment ID</label><input type="text" id="expId" placeholder="e.g. TSA-MIX-003"></div>
+    <div class="form-group"><label>Category</label><input type="text" id="expCategory" placeholder="e.g. Temperature Swing Adsorption"></div>
+    <div class="form-group"><label>Operator</label><input type="text" id="expOperator" placeholder="e.g. SM"></div>
+    <div class="form-group"><label>Date</label><input type="date" id="expDate"></div>
+    <div class="form-group"><label>Notes</label><textarea id="expNotes" placeholder="Any notes..."></textarea></div>
+    <div class="modal-actions">
+      <button class="btn btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveExperiment()">Save Experiment</button>
+    </div>
+  </div>
+</div>
+
+<!-- UPLOAD DATA MODAL -->
+<div class="modal-overlay" id="uploadModalOverlay">
+  <div class="modal">
+    <h3>⬆ Upload Data File</h3>
+    <p style="font-size:13px; color:#666; margin-bottom:16px">Upload a CSV or Excel file with measurement data for this experiment. It will be automatically linked by experiment ID.</p>
+    <div class="upload-info">
+      <strong>Experiment ID:</strong> <span id="uploadExpId"></span><br>
+      <strong>File will be saved as:</strong> <span id="uploadSaveName"></span>
+    </div>
+    <div class="form-group">
+      <label>Select Data File (CSV or Excel)</label>
+      <input type="file" id="uploadDataFile" accept=".csv,.xlsx,.xls">
+    </div>
+    <div id="uploadResult" style="margin-top:12px; padding:10px 14px; border-radius:6px; font-size:13px; display:none; line-height:1.6"></div>
+    <div class="modal-actions">
+      <button class="btn btn-cancel" onclick="closeUploadModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="submitDataUpload()">Upload File</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let allExperiments = [];
+  let currentData = [];
+  let charts = {};
+  let currentUploadExpId = '';
+
+  // ── TAB SWITCHING ──
+  function switchTab(tab, el) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.getElementById('tab-' + tab).classList.add('active');
+    if (el) el.classList.add('active');
+  }
+
+  // ── EXPERIMENTS ──
+  async function loadExperiments() {
+    const res = await fetch('http://127.0.0.1:8000/experiments');
+    allExperiments = await res.json();
+    populateCategoryFilter();
+    populateAnalyticsSelect();
+    populateRegressionSelect();
+    populateAISelect();
+    renderTable(allExperiments);
+  }
+
+  function renderTable(data) {
+    const tbody = document.getElementById('experimentsTable');
+    document.getElementById('countLabel').textContent = `Showing ${data.length} experiment(s)`;
+    if (data.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:#999">No experiments found</td></tr>';
+      return;
+    }
+    tbody.innerHTML = data.map(exp => `
+      <tr>
+        <td><strong>${exp.id}</strong></td>
+        <td>${exp.category}</td>
+        <td>${exp.operator}</td>
+        <td>${exp.date}</td>
+        <td>${exp.notes || 'N/A'}</td>
+        <td>
+          <button class="action-btn btn-view" onclick="goToAnalytics('${exp.id}')">📊 Analyze</button>
+          <button class="action-btn btn-reg" onclick="goToRegression('${exp.id}')">📈 Regress</button>
+          <button class="action-btn btn-upload" onclick="openUploadModal('${exp.id}')">⬆ Data</button>
+          <button class="action-btn btn-delete" onclick="deleteExperiment('${exp.id}')">🗑 Delete</button>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  function populateCategoryFilter() {
+    const cats = [...new Set(allExperiments.map(e => e.category))];
+    const sel = document.getElementById('categoryFilter');
+    sel.innerHTML = '<option value="">All categories</option>' + cats.map(c => `<option value="${c}">${c}</option>`).join('');
+  }
+
+  function populateAnalyticsSelect() {
+    const sel = document.getElementById('analyticsExpSelect');
+    sel.innerHTML = '<option value="">-- Choose an experiment --</option>' +
+      allExperiments.map(e => `<option value="${e.id}">${e.id} — ${e.category}</option>`).join('');
+  }
+
+  function populateRegressionSelect() {
+    const sel = document.getElementById('regExpSelect');
+    sel.innerHTML = '<option value="">-- Choose an experiment --</option>' +
+      allExperiments.map(e => `<option value="${e.id}">${e.id} — ${e.category}</option>`).join('');
+  }
+
+  function populateAISelect() {
+    const sel = document.getElementById('aiExpSelect');
+    sel.innerHTML = '<option value="">All experiments</option>' +
+      allExperiments.map(e => `<option value="${e.id}">${e.id} — ${e.category}</option>`).join('');
+  }
+
+  function filterTable() {
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    const category = document.getElementById('categoryFilter').value;
+    const filtered = allExperiments.filter(exp => {
+      const matchSearch = !search || (exp.notes && exp.notes.toLowerCase().includes(search)) || exp.id.toLowerCase().includes(search);
+      const matchCat = !category || exp.category === category;
+      return matchSearch && matchCat;
+    });
+    renderTable(filtered);
+  }
+
+  async function deleteExperiment(id) {
+    if (!confirm(`Delete experiment ${id}?`)) return;
+    await fetch(`http://127.0.0.1:8000/experiments/${id}`, { method: 'DELETE' });
+    loadExperiments();
+  }
+
+  function goToAnalytics(id) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab')[1].classList.add('active');
+    document.getElementById('tab-analytics').classList.add('active');
+    document.getElementById('analyticsExpSelect').value = id;
+    loadAnalytics();
+  }
+
+  function goToRegression(id) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab')[2].classList.add('active');
+    document.getElementById('tab-regression').classList.add('active');
+    document.getElementById('regExpSelect').value = id;
+    loadRegression();
+  }
+
+  // ── NEW EXPERIMENT MODAL ──
+  function openModal() {
+    document.getElementById('modalOverlay').classList.add('open');
+    document.getElementById('expDate').valueAsDate = new Date();
+  }
+  function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
+
+  async function saveExperiment() {
+    const experiment = {
+      id: document.getElementById('expId').value,
+      category: document.getElementById('expCategory').value,
+      operator: document.getElementById('expOperator').value,
+      date: document.getElementById('expDate').value,
+      notes: document.getElementById('expNotes').value
+    };
+    if (!experiment.id || !experiment.category || !experiment.operator) {
+      alert('Please fill in ID, Category and Operator');
+      return;
+    }
+    const res = await fetch('http://127.0.0.1:8000/experiments', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(experiment)
+    });
+    if (res.ok) { closeModal(); loadExperiments(); }
+    else { alert('Error saving. ID may already exist.'); }
+  }
+
+  // ── IMPORT ──
+  function toggleImport() {
+    document.getElementById('importBox').classList.toggle('open');
+    document.getElementById('importResult').style.display = 'none';
+  }
+
+  async function importFile() {
+    const fileInput = document.getElementById('importFile');
+    const resultBox = document.getElementById('importResult');
+    if (!fileInput.files[0]) { alert('Please select a file first'); return; }
+    const formData = new FormData();
+    formData.append('file', fileInput.files[0]);
+    try {
+      const res = await fetch('http://127.0.0.1:8000/import', { method: 'POST', body: formData });
+      const data = await res.json();
+      if (res.ok) {
+        resultBox.className = 'import-result success';
+        resultBox.textContent = `✅ Success! Imported ${data.imported} experiments. Skipped ${data.skipped} duplicates.`;
+        resultBox.style.display = 'block';
+        loadExperiments();
+      } else {
+        resultBox.className = 'import-result error';
+        resultBox.textContent = `❌ Error: ${data.detail}`;
+        resultBox.style.display = 'block';
+      }
+    } catch (e) {
+      resultBox.className = 'import-result error';
+      resultBox.textContent = '❌ Could not connect to server';
+      resultBox.style.display = 'block';
+    }
+  }
+
+  // ── UPLOAD DATA MODAL ──
+  function openUploadModal(expId) {
+    currentUploadExpId = expId;
+    document.getElementById('uploadExpId').textContent = expId;
+    document.getElementById('uploadSaveName').textContent = `data/${expId}_data.csv`;
+    document.getElementById('uploadResult').style.display = 'none';
+    document.getElementById('uploadDataFile').value = '';
+    document.getElementById('uploadModalOverlay').classList.add('open');
+  }
+
+  function closeUploadModal() {
+    document.getElementById('uploadModalOverlay').classList.remove('open');
+  }
+
+  async function submitDataUpload() {
+    const fileInput = document.getElementById('uploadDataFile');
+    const resultBox = document.getElementById('uploadResult');
+    if (!fileInput.files[0]) { alert('Please select a file first'); return; }
+    const formData = new FormData();
+    formData.append('file', fileInput.files[0]);
+    resultBox.style.display = 'block';
+    resultBox.style.background = '#fff8e1';
+    resultBox.style.color = '#856404';
+    resultBox.textContent = '⏳ Uploading and validating file...';
+    try {
+      const res = await fetch(`http://127.0.0.1:8000/upload-data/${currentUploadExpId}`, {
+        method: 'POST',
+        body: formData
+      });
+      const data = await res.json();
+      if (res.ok) {
+        resultBox.style.background = '#e6f4ea';
+        resultBox.style.color = '#2d8f47';
+        resultBox.innerHTML = `✅ <strong>Upload successful!</strong><br>
+          Rows: ${data.rows} | Columns: ${data.columns.length}<br>
+          Columns found: ${data.columns.join(', ')}<br><br>
+          You can now click <strong>📊 Analyze</strong> to view the charts.`;
+      } else {
+        resultBox.style.background = '#fce8e6';
+        resultBox.style.color = '#c5221f';
+        resultBox.textContent = `❌ Error: ${data.detail}`;
+      }
+    } catch(e) {
+      resultBox.style.background = '#fce8e6';
+      resultBox.style.color = '#c5221f';
+      resultBox.textContent = '❌ Could not connect to server';
+    }
+  }
+
+  // ── ANALYTICS ──
+  async function loadAnalytics() {
+    const id = document.getElementById('analyticsExpSelect').value;
+    if (!id) return;
+    document.getElementById('analyticsContent').innerHTML = '<div class="loading">Loading data...</div>';
+    try {
+      const res = await fetch(`http://127.0.0.1:8000/analytics/${id}`);
+      if (!res.ok) {
+        document.getElementById('analyticsContent').innerHTML = '<div class="no-data">⚠️ No data file found. Use the ⬆ Data button to upload a data file for this experiment.</div>';
+        return;
+      }
+      const result = await res.json();
+      currentData = result.data;
+      populateAxisSelects(result.columns);
+      renderAnalytics(result);
+    } catch (e) {
+      document.getElementById('analyticsContent').innerHTML = '<div class="no-data">❌ Could not load data</div>';
+    }
+  }
+
+  function populateAxisSelects(columns) {
+    const numericCols = columns.filter(c => c !== 'timestamp' && c !== 'sim_step');
+    const xSel = document.getElementById('xAxisSelect');
+    const ySel = document.getElementById('yAxisSelect');
+    xSel.innerHTML = columns.map(c => `<option value="${c}" ${c==='timestamp'?'selected':''}>${c}</option>`).join('');
+    ySel.innerHTML = numericCols.map((c,i) => `<option value="${c}" ${i===0?'selected':''}>${c}</option>`).join('');
+  }
+
+  function renderAnalytics(result) {
+    const stats = result.stats;
+    const cols = Object.keys(stats).filter(c => c !== 'timestamp' && c !== 'sim_step' && c !== 'cycle_number');
+    const statCards = cols.slice(0, 4).map(col => {
+      const mean = stats[col]?.mean?.toFixed(2) ?? 'N/A';
+      const min = stats[col]?.min?.toFixed(2) ?? 'N/A';
+      const max = stats[col]?.max?.toFixed(2) ?? 'N/A';
+      return `<div class="stat-card"><div class="stat-label">${col} (mean)</div><div class="stat-value">${mean}</div><div class="stat-unit">min: ${min} | max: ${max}</div></div>`;
+    }).join('');
+
+    document.getElementById('analyticsContent').innerHTML = `
+      <div class="stats-grid">${statCards}</div>
+      <div class="charts-grid">
+        <div class="chart-card"><h4>📈 Custom Chart</h4><canvas id="customChart"></canvas></div>
+        <div class="chart-card"><h4>🌡️ Temperature Over Time</h4><canvas id="tempChart"></canvas></div>
+        <div class="chart-card"><h4>💨 Inlet vs Outlet O₂</h4><canvas id="o2Chart"></canvas></div>
+        <div class="chart-card"><h4>🔵 Pressure Over Time</h4><canvas id="pressureChart"></canvas></div>
+      </div>`;
+
+    Object.values(charts).forEach(c => c.destroy());
+    charts = {};
+    const labels = currentData.map((_, i) => i + 1);
+
+    if (result.columns.includes('temperature_C')) {
+      charts.temp = new Chart(document.getElementById('tempChart'), {
+        type: 'line',
+        data: { labels, datasets: [{ label: 'Temperature (°C)', data: currentData.map(r => r.temperature_C), borderColor: '#e53935', backgroundColor: 'rgba(229,57,53,0.1)', tension: 0.3, pointRadius: 0 }] },
+        options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { title: { display: true, text: '°C' } } } }
+      });
+    }
+    if (result.columns.includes('inlet_O2_pct') && result.columns.includes('outlet_O2_pct')) {
+      charts.o2 = new Chart(document.getElementById('o2Chart'), {
+        type: 'line',
+        data: { labels, datasets: [
+          { label: 'Inlet O₂ %', data: currentData.map(r => r.inlet_O2_pct), borderColor: '#1a73e8', tension: 0.3, pointRadius: 0 },
+          { label: 'Outlet O₂ %', data: currentData.map(r => r.outlet_O2_pct), borderColor: '#34a853', tension: 0.3, pointRadius: 0 }
+        ]},
+        options: { responsive: true, scales: { y: { title: { display: true, text: '%' } } } }
+      });
+    }
+    if (result.columns.includes('pressure_bar')) {
+      charts.pressure = new Chart(document.getElementById('pressureChart'), {
+        type: 'line',
+        data: { labels, datasets: [{ label: 'Pressure (bar)', data: currentData.map(r => r.pressure_bar), borderColor: '#9c27b0', backgroundColor: 'rgba(156,39,176,0.1)', tension: 0.3, pointRadius: 0 }] },
+        options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { title: { display: true, text: 'bar' } } } }
+      });
+    }
+    updateCharts();
+  }
+
+  function updateCharts() {
+    if (!currentData.length) return;
+    const xCol = document.getElementById('xAxisSelect').value;
+    const yCol = document.getElementById('yAxisSelect').value;
+    if (!yCol) return;
+    const labels = currentData.map((r, i) => xCol === 'timestamp' ? i + 1 : r[xCol]);
+    const canvas = document.getElementById('customChart');
+    if (!canvas) return;
+    if (charts.custom) charts.custom.destroy();
+    charts.custom = new Chart(canvas, {
+      type: 'line',
+      data: { labels, datasets: [{ label: yCol, data: currentData.map(r => r[yCol]), borderColor: '#ff6f00', backgroundColor: 'rgba(255,111,0,0.1)', tension: 0.3, pointRadius: 0 }] },
+      options: { responsive: true, scales: { y: { title: { display: true, text: yCol } } } }
+    });
+  }
+
+  // ── REGRESSION ──
+  async function loadRegression() {
+    const id = document.getElementById('regExpSelect').value;
+    if (!id) return;
+    const degree = document.getElementById('regDegree').value;
+    document.getElementById('regressionContent').innerHTML = '<div class="loading">Running regression analysis...</div>';
+    try {
+      const dataRes = await fetch(`http://127.0.0.1:8000/analytics/${id}`);
+      if (!dataRes.ok) {
+        document.getElementById('regressionContent').innerHTML = '<div class="no-data">⚠️ No data file found. Use the ⬆ Data button to upload a data file first.</div>';
+        return;
+      }
+      const dataResult = await dataRes.json();
+      const numCols = dataResult.columns.filter(c => c !== 'timestamp' && c !== 'sim_step');
+      const ySel = document.getElementById('regYCol');
+      const currentY = ySel.value;
+      ySel.innerHTML = numCols.map(c => `<option value="${c}" ${c===currentY?'selected':''}>${c}</option>`).join('');
+      const yCol = ySel.value || numCols[0];
+      const res = await fetch(`http://127.0.0.1:8000/regression/${id}?y_col=${yCol}&degree=${degree}`);
+      const result = await res.json();
+      const corrRes = await fetch(`http://127.0.0.1:8000/correlation/${id}`);
+      const corrResult = await corrRes.json();
+      renderRegression(result, corrResult);
+    } catch(e) {
+      document.getElementById('regressionContent').innerHTML = '<div class="no-data">❌ Error running regression.</div>';
+    }
+  }
+
+  function renderRegression(result, corrResult) {
+    const r2 = result.r2_score;
+    const r2Color = r2 > 0.9 ? '#34a853' : r2 > 0.7 ? '#fbbc04' : '#e53935';
+    const r2Label = r2 > 0.9 ? '✅ Excellent fit' : r2 > 0.7 ? '⚠️ Moderate fit' : '❌ Poor fit';
+    const degreeLabel = result.degree == 1 ? 'Linear' : result.degree == 2 ? 'Quadratic' : 'Cubic';
+
+    document.getElementById('regressionContent').innerHTML = `
+      <div class="stats-grid-3">
+        <div class="stat-card"><div class="stat-label">R² Score (fit quality)</div><div class="stat-value" style="color:${r2Color}">${r2}</div><div class="stat-unit">${r2Label}</div></div>
+        <div class="stat-card"><div class="stat-label">Model Type</div><div class="stat-value" style="font-size:18px">${degreeLabel}</div><div class="stat-unit">Degree ${result.degree} polynomial</div></div>
+        <div class="stat-card"><div class="stat-label">Data Points</div><div class="stat-value">${result.actual.x.length}</div><div class="stat-unit">+ 20% forecast horizon</div></div>
+      </div>
+      <div class="charts-grid">
+        <div class="chart-card span-2"><h4>📈 Regression & Forecast — ${result.y_col}</h4><canvas id="regressionChart"></canvas></div>
+        <div class="chart-card span-2"><h4>🔥 Correlation with ${corrResult.columns[0]}</h4><canvas id="corrChart"></canvas></div>
+      </div>`;
+
+    if (charts.regression) charts.regression.destroy();
+    if (charts.corr) charts.corr.destroy();
+
+    const totalPoints = result.forecast.x.length;
+    const splitIdx = result.actual.x.length;
+    const allLabels = result.forecast.x.map(v => Math.round(v));
+    const actualY = [...result.actual.y, ...Array(totalPoints - splitIdx).fill(null)];
+    const fittedY = [...result.fitted.y, ...Array(totalPoints - splitIdx).fill(null)];
+    const forecastY = [...Array(splitIdx - 1).fill(null), result.actual.y[splitIdx-1], ...result.forecast.y.slice(splitIdx)];
+
+    charts.regression = new Chart(document.getElementById('regressionChart'), {
+      type: 'line',
+      data: {
+        labels: allLabels,
+        datasets: [
+          { label: `Actual ${result.y_col}`, data: actualY, borderColor: '#1a73e8', pointRadius: 0, tension: 0.2, borderWidth: 2 },
+          { label: 'Fitted curve', data: fittedY, borderColor: '#34a853', borderDash: [5,3], pointRadius: 0, tension: 0.2, borderWidth: 2 },
+          { label: '🔮 Forecast', data: forecastY, borderColor: '#ff6f00', borderDash: [8,4], pointRadius: 0, tension: 0.2, borderWidth: 2 }
+        ]
+      },
+      options: { responsive: true, plugins: { legend: { position: 'top' } }, scales: { y: { title: { display: true, text: result.y_col } }, x: { title: { display: true, text: 'Data point index' } } } }
+    });
+
+    const cols = corrResult.columns;
+    const firstRow = corrResult.matrix[0];
+    charts.corr = new Chart(document.getElementById('corrChart'), {
+      type: 'bar',
+      data: {
+        labels: cols,
+        datasets: [{ label: `Correlation with ${cols[0]}`, data: firstRow, backgroundColor: firstRow.map(v => v > 0.5 ? 'rgba(52,168,83,0.7)' : v < -0.5 ? 'rgba(229,57,53,0.7)' : 'rgba(26,115,232,0.5)'), borderRadius: 4 }]
+      },
+      options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { min: -1, max: 1, title: { display: true, text: 'Correlation coefficient' } } } }
+    });
+  }
+
+  // ── AI ASSISTANT ──
+  function askQuestion(q) {
+    document.getElementById('aiInput').value = q;
+    sendAIQuery();
+  }
+
+  async function sendAIQuery() {
+    const input = document.getElementById('aiInput');
+    const question = input.value.trim();
+    if (!question) return;
+    const experimentId = document.getElementById('aiExpSelect').value;
+    const chatBox = document.getElementById('chatMessages');
+    chatBox.innerHTML += `<div class="msg-user"><div>${question}</div></div>`;
+    chatBox.innerHTML += `<div class="msg-ai" id="aiLoading"><div class="msg-ai-icon">🤖</div><div class="msg-ai-text" style="color:#aaa">⚗️ Analyzing your lab data...</div></div>`;
+    chatBox.scrollTop = chatBox.scrollHeight;
+    input.value = '';
+    try {
+      const res = await fetch('http://127.0.0.1:8000/ai-query', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question, experiment_id: experimentId })
+      });
+      const data = await res.json();
+      document.getElementById('aiLoading').remove();
+      chatBox.innerHTML += `<div class="msg-ai"><div class="msg-ai-icon">🤖</div><div class="msg-ai-text">${data.answer}</div></div>`;
+      chatBox.scrollTop = chatBox.scrollHeight;
+    } catch(e) {
+      document.getElementById('aiLoading').remove();
+      chatBox.innerHTML += `<div style="color:#e53935; font-size:13px; padding:8px">❌ Error connecting to AI.</div>`;
+    }
+  }
+
+
+  // ── AUTH ──
+function doLogout() {
+  localStorage.removeItem('labiq_token');
+  localStorage.removeItem('labiq_username');
+  window.location.href = '/login';
+}
+
+// Show username in header
+const username = localStorage.getItem('labiq_username');
+if (username) {
+  document.getElementById('headerUsername').textContent = `Hello, ${username}!`;
+}
+
+  loadExperiments();
+</script>
+</body>
+</html>

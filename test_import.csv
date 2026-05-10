@@ -1,0 +1,10 @@
+id,category,operator,date,notes
+TSA-MIX-001,Temperature Swing Adsorption,SM,2026-05-06,First real experiment saved to database!
+TSA-MIX-002,Temperature Swing Adsorption,SM,2026-05-06,Second experiment saved to database!
+PSA-N2-001,Temperature Swing Adsorption,BS,2026-05-07,This is just a test
+ISB-REG-001,iSorb,NKS,2026-05-01,Baseline measurement
+PSA-MIX-005,Pressure Swing Adsorption,ET,2026-05-02,High pressure test
+SIM-001,Simulation,TST,2026-05-03,Computational run
+TSA-N2-001,Temperature Swing Adsorption,SM,2026-05-04,Nitrogen cycle test
+TSA-N2-002,Temperature Swing Adsorption,BS,2026-05-07,test 2
+TSA-N2-003,Temperature Swing Adsorption,BS,2026-05-08,test 1
