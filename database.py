@@ -1,4 +1,3 @@
-Set-Content database.py @"
 import os
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
@@ -6,7 +5,6 @@ from sqlalchemy.orm import sessionmaker
 
 DATABASE_URL = os.environ.get("DATABASE_URL", "sqlite:///./labiq.db")
 
-# Fix for Railway PostgreSQL URL format
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
@@ -24,4 +22,3 @@ def get_db():
         yield db
     finally:
         db.close()
-"@
