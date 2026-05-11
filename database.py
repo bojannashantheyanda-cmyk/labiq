@@ -1,23 +1,27 @@
+Set-Content database.py @"
+import os
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-# This creates a local SQLite database file called labiq.db
-SQLALCHEMY_DATABASE_URL = "sqlite:///./labiq.db"
+DATABASE_URL = os.environ.get("DATABASE_URL", "sqlite:///./labiq.db")
 
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL, 
-    connect_args={"check_same_thread": False}
-)
+# Fix for Railway PostgreSQL URL format
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+if "postgresql" in DATABASE_URL:
+    engine = create_engine(DATABASE_URL)
+else:
+    engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
 Base = declarative_base()
 
-# This gives us a database session for each request
 def get_db():
     db = SessionLocal()
     try:
         yield db
     finally:
         db.close()
+"@
