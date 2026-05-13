@@ -8,6 +8,15 @@ import json
 import tkinter as tk
 from tkinter import filedialog, messagebox
 
+# Set base path for finding app files
+if getattr(sys, 'frozen', False):
+    BASE_PATH = sys._MEIPASS
+else:
+    BASE_PATH = os.path.dirname(os.path.abspath(__file__))
+
+# Set working directory so uvicorn can find main.py
+os.chdir(BASE_PATH)
+
 CONFIG_FILE = os.path.join(os.path.expanduser("~"), ".labiq_config.json")
 
 def get_db_path():
@@ -31,10 +40,10 @@ def choose_folder():
         with open(CONFIG_FILE, "w") as f:
             json.dump({"db_path": db_path}, f)
         return db_path
-    return "./labiq.db"
+    return os.path.join(BASE_PATH, "labiq.db")
 
 def open_browser():
-    time.sleep(2)
+    time.sleep(3)
     webbrowser.open("http://127.0.0.1:8000/login")
 
 if __name__ == "__main__":
