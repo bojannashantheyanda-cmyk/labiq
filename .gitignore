@@ -1,4 +1,8 @@
+dist/
+build/
+installer/
+*.exe
+*.pkg
+__pycache__/
 .env
 venv/
-__pycache__/
-*.db
