@@ -5,7 +5,7 @@ a = Analysis(
     ['launcher.py'],
     pathex=[],
     binaries=[],
-    datas=[('static', 'static'), ('data', 'data'), ('main.py', '.'), ('models.py', '.'), ('auth.py', '.'), ('database.py', '.')],
+    datas=[('static', 'static'), ('data', 'data'), ('main.py', '.'), ('models.py', '.'), ('auth.py', '.'), ('database.py', '.'), ('.env', '.')],
     hiddenimports=['fastapi', 'fastapi.staticfiles', 'fastapi.templating', 'fastapi.responses', 'fastapi.middleware', 'fastapi.middleware.cors', 'uvicorn', 'uvicorn.logging', 'uvicorn.loops', 'uvicorn.loops.auto', 'uvicorn.protocols', 'uvicorn.protocols.http', 'uvicorn.protocols.http.auto', 'uvicorn.protocols.websockets', 'uvicorn.protocols.websockets.auto', 'uvicorn.lifespan', 'uvicorn.lifespan.on', 'sqlalchemy', 'sqlalchemy.ext.declarative', 'sqlalchemy.orm', 'sqlalchemy.dialects.sqlite', 'passlib', 'passlib.handlers.sha2_crypt', 'jose', 'jose.jwt', 'jose.exceptions', 'jose.constants', 'jose.backends', 'multipart', 'pandas', 'openpyxl', 'sklearn', 'anthropic', 'aiofiles', 'dotenv'],
     hookspath=[],
     hooksconfig={},

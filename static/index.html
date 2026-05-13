@@ -124,6 +124,7 @@
     </select>
     <button class="btn btn-primary" onclick="openModal()">+ New Experiment</button>
     <button class="btn btn-success" onclick="toggleImport()">⬆ Import CSV / Excel</button>
+    <button class="btn btn-success" onclick="exportToExcel()">⬇ Export to Excel</button>
   </div>
   <div class="import-box" id="importBox">
     <h4>Import experiments from a file</h4>
@@ -450,6 +451,22 @@
     }
   }
 
+  // ── EXPORT TO EXCEL ──
+  function exportToExcel() {
+    const rows = [['ID', 'Category', 'Operator', 'Date', 'Notes']];
+    allExperiments.forEach(exp => {
+      rows.push([exp.id, exp.category, exp.operator, exp.date, exp.notes || '']);
+    });
+    let csv = rows.map(r => r.map(v => `"${v}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'LabIQ_Experiments.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   // ── UPLOAD DATA MODAL ──
   function openUploadModal(expId) {
     currentUploadExpId = expId;
@@ -705,19 +722,18 @@
     }
   }
 
-
   // ── AUTH ──
-function doLogout() {
-  localStorage.removeItem('labiq_token');
-  localStorage.removeItem('labiq_username');
-  window.location.href = '/login';
-}
+  function doLogout() {
+    localStorage.removeItem('labiq_token');
+    localStorage.removeItem('labiq_username');
+    window.location.href = '/login';
+  }
 
-// Show username in header
-const username = localStorage.getItem('labiq_username');
-if (username) {
-  document.getElementById('headerUsername').textContent = `Hello, ${username}!`;
-}
+  // Show username in header
+  const username = localStorage.getItem('labiq_username');
+  if (username) {
+    document.getElementById('headerUsername').textContent = `Hello, ${username}!`;
+  }
 
   loadExperiments();
 </script>
